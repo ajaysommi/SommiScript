@@ -20,6 +20,7 @@ public final class LexerTests {
         return Stream.of(
             Arguments.of("Space", " ", true),
             Arguments.of("Newline", "\n", true),
+            Arguments.of("Many repeated", "      ", true),
             Arguments.of("Multiple", "   \n   ", true)
         );
     }
@@ -33,7 +34,13 @@ public final class LexerTests {
     public static Stream<Arguments> testComment() {
         return Stream.of(
             Arguments.of("Comment", "//comment", true),
-            Arguments.of("Multiple", "//first\n//second", true)
+            Arguments.of("Multiple", "//first\n//second", true),
+            Arguments.of("Three comments", "//first\n//second\n//another", true),
+            Arguments.of("One backslash", "/onesinglebackslash", false),
+            Arguments.of("Invalid escape", "//first\bsecond", true),
+            Arguments.of("Valid escape", "//first\nsecond", false),
+            Arguments.of("No comment", "//", true),
+            Arguments.of("Should ignore", "//44<>string'c'//", true)
         );
     }
 
@@ -48,7 +55,14 @@ public final class LexerTests {
             Arguments.of("Alphabetic", "getName", true),
             Arguments.of("Alphanumeric", "thelegend27", true),
             Arguments.of("Leading Hyphen", "-five", false),
-            Arguments.of("Leading Digit", "1fish2fish", false)
+            Arguments.of("Leading Digit", "1fish2fish", false),
+            Arguments.of("Single character", "I", true),
+            Arguments.of("Long with all other tokens", "Includes+-<>'s'904305", false),
+            Arguments.of("Extreme limits", "IdentZUaizo930__aj-a", true),
+            Arguments.of("String", "\"amianidentifier\"", false),
+            Arguments.of("All underscores", "_______", true),
+            Arguments.of("Period", ".", false),
+            Arguments.of("Space in middle", "Ident ifier", false)
         );
     }
 
@@ -63,7 +77,17 @@ public final class LexerTests {
             Arguments.of("Single Digit", "1", true),
             Arguments.of("Multiple Digits", "123", true),
             Arguments.of("Exponent", "1e10", true),
-            Arguments.of("Missing Exponent Digits", "1e", false)
+            Arguments.of("Missing Exponent Digits", "1e", false),
+            Arguments.of("Negative Number", "-123", true),
+            Arguments.of("Two dashes", "--123", false),
+            Arguments.of("Negative Decimal", "-1.30", false),
+            Arguments.of("Completely Invalid", "-.23", false),
+            Arguments.of("Two Digits", "21", true),
+            Arguments.of("Many Digits", "999999", true),
+            Arguments.of("Single Zero", "0", true),
+            Arguments.of("Explicitly Positive", "+1", true),
+            Arguments.of("Explicitly Negative", "-91", true),
+            Arguments.of("Positive and Negative", "+-13", false)
         );
     }
 

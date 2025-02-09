@@ -51,11 +51,23 @@ public final class Lexer {
             lexComment();
         } else if (chars.match("[A-Za-z_]")) {
             return lexIdentifier();
+        } else if (chars.match("-")) {
+            if (chars.match("[0-9]")) {
+                return lexNumber();
+            }
+            return new Token(Token.Type.OPERATOR, chars.emit());
+        } else if (chars.match("\\+")) {
+            if (chars.match("[0-9]")) {
+                return lexNumber();
+            }
+            return new Token(Token.Type.OPERATOR, chars.emit());
         } else if (chars.match("[+-]?[0-9]+")) {
-            if (chars.peek("e", "[^0-9]*") || !chars.has(1)) {
+            if (chars.peek("e", "[^0-9]*")
+                    || (!chars.has(1) && !chars.peek("[0-9]"))) {
                 return new Token(Token.Type.INTEGER, chars.emit());
             }
-            else if (chars.peek("\\.", "[^0-9]*") || !chars.has(1)) {
+            else if (chars.peek("\\.", "[^0-9]*")
+                    || (!chars.has(1) && !chars.peek("[0-9]"))) {
                 return new Token(Token.Type.INTEGER, chars.emit());
             }
             return lexNumber();
@@ -70,10 +82,14 @@ public final class Lexer {
             return lexString();
         } else if (chars.match("\\\\")) {
             return lexEscape();
-        } else if (chars.match("[*-<>!=()]")) {
-            return lexOperator();
-        } else if (chars.match("[\\s\\n\\r\\t]")) {
+        } else if (chars.match("[ \\n\\r\\t]+")) {
             lexWhitespace();
+        } else if (chars.match("[<>!=]", "[=]?")) {
+            System.out.println("first");
+            return lexOperator();
+        } else if (chars.match("[^A-Za-z_0-9'\"\\n\\r\\t]")) {
+            System.out.println("next");
+            return lexOperator();
         }
         return null;
     }
@@ -127,7 +143,7 @@ public final class Lexer {
                     return new Token(Token.Type.IDENTIFIER, chars.emit());
                 }
             }
-            while (chars.match("(\\.?[0-9]*)?(e\\+?-?[0-9]*)?")) {
+            while (chars.match("[0-9]*(\\.?[0-9]*)?(e\\+?-?[0-9]*)?")) {
                 if (chars.peek("\\.", "[^0-9]")) {
                     return new Token(Token.Type.INTEGER, chars.emit());
                 }
