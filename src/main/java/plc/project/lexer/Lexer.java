@@ -4,6 +4,9 @@ import org.checkerframework.checker.signature.qual.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -18,7 +21,6 @@ import static com.google.common.base.Preconditions.checkState;
  * utilities for working with character state and building tokens.
  */
 public final class Lexer {
-
     private final CharStream chars;
     boolean ThrowException = false;
     public Lexer(String input) {
@@ -73,7 +75,7 @@ public final class Lexer {
             return lexNumber();
         } else if (chars.match("'")) {
             if (chars.peek("([^'\\n\\r]|(\\\\[bnrt'\\\"]))", "'")
-                    || chars.peek("([^'\\n\\r]|(\\\\[bnrt'\\\"]))", "([^'\\n\\r]|(\\\\[bnrt'\\\"]))", "'")) {
+                    || chars.peek("(\\\\)", "[bnrt'\\\"]", "'")) {
                 return lexCharacter();
             }
             ThrowException = true;
@@ -85,10 +87,8 @@ public final class Lexer {
         } else if (chars.match("[ \\n\\r\\t]+")) {
             lexWhitespace();
         } else if (chars.match("[<>!=]", "[=]?")) {
-            System.out.println("first");
-            return lexOperator();
+            return new Token(Token.Type.OPERATOR, chars.emit());
         } else if (chars.match("[^A-Za-z_0-9'\"\\n\\r\\t]")) {
-            System.out.println("next");
             return lexOperator();
         }
         return null;
@@ -144,11 +144,15 @@ public final class Lexer {
                 }
             }
             while (chars.match("[0-9]*(\\.?[0-9]*)?(e\\+?-?[0-9]*)?")) {
-                if (chars.peek("\\.", "[^0-9]")) {
+                if (chars.peek("\\.", "[^0-9]*")
+                        || (chars.peek("\\.") && !(chars.has(2)))) {
+                    System.out.println("outed");
                     return new Token(Token.Type.INTEGER, chars.emit());
                 }
                 if (chars.match("\\.")) {
-                    decimal_flag++;
+                    if (chars.peek("[0-9]")) {
+                        decimal_flag++;
+                    }
                     while (chars.match("[0-9]+(e\\+?-?[0-9]+)?")) {
                         if (chars.peek("e", "[^0-9]")) {
                             if (decimal_flag == 1) {

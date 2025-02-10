@@ -87,7 +87,9 @@ public final class LexerTests {
             Arguments.of("Single Zero", "0", true),
             Arguments.of("Explicitly Positive", "+1", true),
             Arguments.of("Explicitly Negative", "-91", true),
-            Arguments.of("Positive and Negative", "+-13", false)
+            Arguments.of("Positive and Negative", "+-13", false),
+            Arguments.of("String After Decimal", "21.toString", false),
+            Arguments.of("Nothing After Decimal", "21.", false)
         );
     }
 
@@ -102,7 +104,18 @@ public final class LexerTests {
             Arguments.of("Integer", "1", false),
             Arguments.of("Multiple Digits", "123.456", true),
             Arguments.of("Exponent", "1.0e10", true),
-            Arguments.of("Trailing Decimal", "1.", false)
+            Arguments.of("Trailing Decimal", "11.", false),
+            Arguments.of("Negative Integer", "-123", false),
+            Arguments.of("Two dashes", "--12.3", false),
+            Arguments.of("Negative Decimal", "-1.30", true),
+            Arguments.of("Completely Invalid", "-.23", false),
+            Arguments.of("Two Decimal Digits", "2.1", true),
+            Arguments.of("Many Digits", "999.999", true),
+            Arguments.of("Single Zero", "0", false),
+            Arguments.of("Explicitly Positive", "+1.3", true),
+            Arguments.of("Explicitly Negative", "-91", false),
+            Arguments.of("Positive and Negative", "+-13", false),
+            Arguments.of("Nothing after Decimal", "555.", false)
         );
     }
 
@@ -117,7 +130,13 @@ public final class LexerTests {
             Arguments.of("Alphabetic", "\'c\'", true),
             Arguments.of("Newline Escape", "\'\\n\'", true),
             Arguments.of("Unterminated", "\'u", false),
-            Arguments.of("Multiple", "\'abc\'", false)
+            Arguments.of("Multiple", "\'abc\'", false),
+            Arguments.of("Extra \'", "\'a\'\'", false),
+            Arguments.of("Empty", "\'\'", false),
+            Arguments.of("Multiple", "\'\\o\'", false),
+            Arguments.of("Number", "\'7\'", true),
+            Arguments.of("Escape", "\'\\\'", true),
+            Arguments.of("Long Sequence", "\'904813305\'", false)
         );
     }
 
@@ -132,7 +151,13 @@ public final class LexerTests {
             Arguments.of("Empty", "\"\"", true),
             Arguments.of("Alphabetic", "\"string\"", true),
             Arguments.of("Newline Escape", "\"Hello,\\nWorld\"", true),
-            Arguments.of("Invalid Escape", "\"invalid\\escape\"", false)
+            Arguments.of("Invalid Escape", "\"invalid\\escape\"", false),
+            Arguments.of("No Close", "\"open string", false),
+            Arguments.of("Extra Quote", "\"extra quote\"\"", false),
+            Arguments.of("No Quotes", "no quotes", false),
+            Arguments.of("Just Whitespace", "\"      \"", true),
+            Arguments.of("Backslash Escape", "\"escaped\\\\\"", true),
+            Arguments.of("Escaped Quote", "\"escaped\\\"quote\"", true)
         );
     }
 
@@ -145,7 +170,10 @@ public final class LexerTests {
     public static Stream<Arguments> testOperator() {
         return Stream.of(
             Arguments.of("Character", "(", true),
-            Arguments.of("Comparison", "<=", true)
+            Arguments.of("Comparison", "<=", true),
+            Arguments.of("Boolean Equal", "==", true),
+            Arguments.of("Extra Equal", "===", false),
+            Arguments.of("Extra Equal", "[[", false)
         );
     }
 
@@ -194,7 +222,8 @@ public final class LexerTests {
         return Stream.of(
             Arguments.of("Character Unterminated", "\'u"),
             Arguments.of("Character Multiple", "\'abc\'"),
-            Arguments.of("String Invalid Escape", "\"invalid\\escape\"")
+            Arguments.of("String Invalid Escape", "\"invalid\\escape\""),
+            Arguments.of("Empty Character", "\'\'")
         );
     }
 
@@ -219,6 +248,14 @@ public final class LexerTests {
                 new Token(Token.Type.STRING, "\"Hello, World!\""),
                 new Token(Token.Type.OPERATOR, ")"),
                 new Token(Token.Type.OPERATOR, ";")
+            )),
+            Arguments.of("Car's Mileage", "2007 Honda Civic = 195000 \"miles\"", List.of(
+                    new Token(Token.Type.INTEGER, "2007"),
+                    new Token(Token.Type.IDENTIFIER, "Honda"),
+                    new Token(Token.Type.IDENTIFIER, "Civic"),
+                    new Token(Token.Type.OPERATOR, "="),
+                    new Token(Token.Type.INTEGER, "195000"),
+                    new Token(Token.Type.STRING, "\"miles\"")
             ))
         );
     }
