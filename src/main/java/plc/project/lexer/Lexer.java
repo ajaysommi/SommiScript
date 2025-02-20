@@ -1,11 +1,7 @@
 package plc.project.lexer;
 
-import org.checkerframework.checker.signature.qual.Identifier;
-
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 
 import static com.google.common.base.Preconditions.checkState;
@@ -179,7 +175,8 @@ public final class Lexer {
                     }
                     return new Token(Token.Type.INTEGER, chars.emit());
                 }
-                if (chars.peek("e", "[^0-9]")) {
+                if (chars.peek("e", "[^0-9]") ||
+                        (chars.peek("e") && !(chars.has(2)))) {
                     if (decimal_flag == 1) {
                         return new Token(Token.Type.DECIMAL, chars.emit());
                     }
@@ -261,6 +258,8 @@ public final class Lexer {
     private void lexWhitespace() {
         chars.length--;
     }
+
+    //submission check
 
 
     /**
