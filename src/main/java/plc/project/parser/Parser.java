@@ -155,7 +155,15 @@ public final class Parser {
     }
 
     private Ast.Stmt.Return parseReturnStmt() throws ParseException {
-        throw new UnsupportedOperationException("TODO"); //TODO
+        Ast.Expr value = null;
+        if (tokens.match(";")) {
+            return new Ast.Stmt.Return(Optional.ofNullable(value));
+        }
+        value = parseExpr();
+        if (tokens.match(";")) {
+            return new Ast.Stmt.Return(Optional.ofNullable(value));
+        }
+        throw new ParseException("Syntax error: missing semicolon!");
     }
 
     private Ast.Stmt parseExpressionOrAssignmentStmt() throws ParseException {
