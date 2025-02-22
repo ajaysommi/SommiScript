@@ -11,7 +11,45 @@ SommiScript is a simple and expressive scripting language designed for learning 
 - Lightweight and easy to learn
 - Based on JavaScript, Python, and BASIC
 - Readable, expressive syntax  
-- Built-in interpreter for quick execution  
+- Built-in interpreter for quick execution
+
+
+## Setting Up Gradle  
+
+SommiScript requires **Gradle** to build and run. Follow the instructions below based on your operating system.
+
+### Windows  
+1. Download Gradle from the official website: [Gradle Releases](https://gradle.org/releases/)  
+2. Extract the ZIP file to `C:\Gradle`  
+3. Add `C:\Gradle\bin` to your **System Environment Variables**:  
+   - Search for "Environment Variables" in Windows  
+   - Edit the `Path` variable and add `C:\Gradle\bin`  
+4. Verify installation:  
+   ```sh
+   gradle -v
+   ```
+
+### macOS
+1. Install Gradle using HomeBrew:
+   ```sh
+   brew install gradle
+   ```
+2. Verify Installation:
+   ```sh
+   gradle -v
+   ```
+
+### Linux
+1. Install Gradle using a package manager:
+   ```sh
+   sudo apt update && sudo apt install gradle  # Debian/Ubuntu  
+   sudo dnf install gradle  # Fedora  
+   ```
+2. Verify Installation:
+   ```sh
+   gradle -v
+   ```
+
 
 ## Installation & Setup  
 Clone the repository and get started:  
