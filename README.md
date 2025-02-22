@@ -2,9 +2,7 @@
 
 SommiScript is a simple and expressive scripting language designed for learning and experimentation. It provides an intuitive syntax and lightweight interpreter, making it easy to explore language design and scripting concepts.  
 
-![GitHub last commit](https://img.shields.io/github/last-commit/ajaysommi/sommiscript)
-
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/ajaysommi/sommiscript?color=blue)
+![GitHub last commit](https://img.shields.io/github/last-commit/ajaysommi/sommiscript) ![GitHub release (latest by date)](https://img.shields.io/github/v/release/ajaysommi/sommiscript?color=blue)
 
 
 
