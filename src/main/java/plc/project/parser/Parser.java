@@ -116,7 +116,23 @@ public final class Parser {
     }
 
     private Ast.Stmt.If parseIfStmt() throws ParseException {
-        throw new UnsupportedOperationException("TODO"); //TODO
+        var condition = parseExpr();
+        var thenBody = new ArrayList<Ast.Stmt>();
+        var elseBody = new ArrayList<Ast.Stmt>();
+        if (!tokens.match("DO")) {
+            throw new ParseException("Syntax error: missing DO");
+        }
+        while (!tokens.match("END")) {
+            if (tokens.match("ELSE")) {
+                if (!tokens.peek("END")) {
+                    elseBody.add(parseStmt());
+                }
+            }
+            else {
+                thenBody.add(parseStmt());
+            }
+        }
+        return new Ast.Stmt.If(condition, thenBody, elseBody);
     }
 
     private Ast.Stmt.For parseForStmt() throws ParseException {
