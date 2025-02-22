@@ -54,13 +54,9 @@ public final class Parser {
         else if (tokens.match("RETURN")) {
             return parseReturnStmt();
         }
-        else if (tokens.match(parseExpr())) {
+        else {
             return parseExpressionOrAssignmentStmt();
         }
-        //either start here or expr. create loop for tokens
-        //while tokens.....
-        //add to a new array of __ objects (maybe ast), returns that
-        return null;
     }
 
     private Ast.Stmt.Let parseLetStmt() throws ParseException {
@@ -167,7 +163,20 @@ public final class Parser {
     }
 
     private Ast.Stmt parseExpressionOrAssignmentStmt() throws ParseException {
-        throw new UnsupportedOperationException("TODO"); //TODO
+        var expression = parseExpr();
+        Ast.Expr value = null;
+        boolean assignment = false;
+        if (tokens.match(";")) {
+            return new Ast.Stmt.Expression(expression);
+        }
+        else if (tokens.match("=")) {
+            value = parseExpr();
+            assignment = true;
+        }
+        if (tokens.match(";") && assignment) {
+            return new Ast.Stmt.Assignment(expression, value);
+        }
+        throw new ParseException("Incorrect Syntax!");
     }
 
     public Ast.Expr parseExpr() throws ParseException {
