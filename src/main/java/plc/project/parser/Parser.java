@@ -1,8 +1,11 @@
 package plc.project.parser;
 
+import org.checkerframework.checker.units.qual.A;
 import plc.project.lexer.Token;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -28,34 +31,31 @@ public final class Parser {
     }
 
     public Ast.Source parseSource() throws ParseException {
-        throw new UnsupportedOperationException("TODO"); //TODO
-        //loop through tokens and call whatever
-        //check if statement or expression, then call that
-        //call stmt, that will call specific stmt, which calls expr, which calls specific expr
+        var statement_list = new ArrayList<Ast.Stmt>();
+        while (tokens.has(0)) {
+            statement_list.add(parseStmt());
+        }
+        return new Ast.Source(statement_list);
     }
 
     public Ast.Stmt parseStmt() throws ParseException {
-        if (tokens.peek("LET")) {
-            parseLetStmt();
-            parseSource();  //recursive call back to base
+        if (tokens.match("LET")) {
+            return parseLetStmt();
         }
-        else if (tokens.peek("DEF")) {
-            parseDefStmt();
+        else if (tokens.match("DEF")) {
+            return parseDefStmt();
         }
-        else if (tokens.peek("DEF")) {
-            parseDefStmt();
+        else if (tokens.match("IF")) {
+            return parseIfStmt();
         }
-        else if (tokens.peek("IF")) {
-            parseIfStmt();
+        else if (tokens.match("FOR")) {
+            return parseForStmt();
         }
-        else if (tokens.peek("FOR")) {
-            parseForStmt();
+        else if (tokens.match("RETURN")) {
+            return parseReturnStmt();
         }
-        else if (tokens.peek("RETURN")) {
-            parseReturnStmt();
-        }
-        else if (tokens.peek("DEF")) {
-            parseExpressionOrAssignmentStmt();
+        else if (tokens.match(parseExpr())) {
+            return parseExpressionOrAssignmentStmt();
         }
         //either start here or expr. create loop for tokens
         //while tokens.....
@@ -64,11 +64,55 @@ public final class Parser {
     }
 
     private Ast.Stmt.Let parseLetStmt() throws ParseException {
-        throw new UnsupportedOperationException("TODO"); //TODO
+        if (!tokens.match(Token.Type.IDENTIFIER)) {
+            throw new ParseException("No identifier!");
+        }
+        var name = tokens.get(-1).literal();
+        Ast.Expr value = null;
+        if (tokens.match("=")) {
+            value = parseExpr();
+        }
+        if (!tokens.match(";")) {
+            throw new ParseException("Missing semicolon!");
+        }
+        return new Ast.Stmt.Let(name, Optional.ofNullable(value));
     }
 
     private Ast.Stmt.Def parseDefStmt() throws ParseException {
-        throw new UnsupportedOperationException("TODO"); //TODO
+        if (!tokens.match(Token.Type.IDENTIFIER)) {
+            throw new ParseException("No identifier!");
+        }
+        boolean multiple_params = false;
+        var name = tokens.get(-1).literal();
+        var parameters = new ArrayList<String>();
+        var body = new ArrayList<Ast.Stmt>();
+        if (tokens.match("(")){
+            //enters while-loop to check for identifiers
+            while (!tokens.match(")") && tokens.has(0)) {
+                if (multiple_params) {
+                    if (tokens.match(",")) {
+                        if (tokens.match(Token.Type.IDENTIFIER)) {
+                            parameters.add(tokens.get(-1).literal());
+                        }
+                        else {  //exception handling
+                            throw new ParseException("Missing identifier after comma!");
+                        }
+                    }
+                }
+                else {
+                    if (tokens.match(Token.Type.IDENTIFIER)) {
+                        parameters.add(tokens.get(-1).literal());
+                    }
+                }
+                multiple_params = true;
+            }
+        }
+        if (tokens.match("DO")) {
+            while (!tokens.match("END") && tokens.has(0)) {
+                body.add(parseStmt());
+            }
+        }
+        return new Ast.Stmt.Def(name, parameters, body);
     }
 
     private Ast.Stmt.If parseIfStmt() throws ParseException {
@@ -76,7 +120,22 @@ public final class Parser {
     }
 
     private Ast.Stmt.For parseForStmt() throws ParseException {
-        throw new UnsupportedOperationException("TODO"); //TODO
+        if (!tokens.match(Token.Type.IDENTIFIER)) {
+            throw new ParseException("No identifier!");
+        }
+        var name = tokens.get(-1).literal();
+        if (!tokens.match("IN")) {
+            throw new ParseException("No IN!");
+        }
+        var expression = parseExpr();
+        if (!tokens.match("DO")) {
+            throw new ParseException("No DO!");
+        }
+        var stmt_list = new ArrayList<Ast.Stmt>();
+        while (!tokens.match("END")) {
+            stmt_list.add(parseStmt());
+        }
+        return new Ast.Stmt.For(name, expression, stmt_list);
     }
 
     private Ast.Stmt.Return parseReturnStmt() throws ParseException {
@@ -97,41 +156,130 @@ public final class Parser {
     }
 
     private Ast.Expr parseLogicalExpr() throws ParseException {
-        return parseComparisonExpr();
+        var comp_expr = parseComparisonExpr();
+        while (tokens.match("AND") || tokens.match("OR")) {
+            var operator = tokens.get(-1).literal();
+            var right = parseComparisonExpr();
+            comp_expr = new Ast.Expr.Binary(operator, comp_expr, right);
+        }
+        return comp_expr;
     }
 
     private Ast.Expr parseComparisonExpr() throws ParseException {
-
-        throw new UnsupportedOperationException("TODO"); //TODO
+        var add_expr = parseAdditiveExpr();
+        while (tokens.match("<") || tokens.match("<=") | tokens.match(">")
+                | tokens.match(">=") | tokens.match("==") | tokens.match("!=")) {
+            var operator = tokens.get(-1).literal();
+            var right = parseAdditiveExpr();
+            add_expr = new Ast.Expr.Binary(operator, add_expr, right);
+        }
+        return add_expr;
     }
 
     private Ast.Expr parseAdditiveExpr() throws ParseException {
-        //call multiplicativeexpr, order of recursiveness
-        throw new UnsupportedOperationException("TODO"); //TODO
+        var mul_expr = parseMultiplicativeExpr();
+        while (tokens.match("+") || tokens.match("-")) {
+            var operator = tokens.get(-1).literal();
+            var right = parseMultiplicativeExpr();
+            mul_expr = new Ast.Expr.Binary(operator, mul_expr, right);
+        }
+        return mul_expr;
     }
 
     private Ast.Expr parseMultiplicativeExpr() throws ParseException {
-        throw new UnsupportedOperationException("TODO"); //TODO
+        var second_expr = parseSecondaryExpr();
+        while (tokens.match("*") || tokens.match("/")) {
+            var operator = tokens.get(-1).literal();
+            var right = parseSecondaryExpr();
+            second_expr = new Ast.Expr.Binary(operator, second_expr, right);
+        }
+        return second_expr;
     }
 
     private Ast.Expr parseSecondaryExpr() throws ParseException {
-        throw new UnsupportedOperationException("TODO"); //TODO
+        var primary_expr = parsePrimaryExpr();
+        while (tokens.match(".") ) {
+            if (tokens.match(Token.Type.IDENTIFIER)) {
+                var identifier = tokens.get(-1).literal();
+                var list_of_params = new ArrayList<Ast.Expr>();
+                if (tokens.match("(")) {
+                    while (!tokens.match(")")) {
+                        if (tokens.peek(")")) {
+                            list_of_params.add(parseExpr());
+                        }
+                        if (tokens.peek(",")) {
+                            list_of_params.add(parseExpr());
+                        }
+                    }
+                    //create list of expr, keep calling group and add to list until )
+                    //outside of this loop return new .method and pass in List
+                }
+                else {
+                    return new Ast.Expr.Property(primary_expr, identifier);
+                }
+                primary_expr = new Ast.Expr.Method(primary_expr, identifier, list_of_params);
+            }
+            else {
+                throw new ParseException("No identifier following period!");
+            }
+        }
+        return primary_expr;
     }
 
     private Ast.Expr parsePrimaryExpr() throws ParseException {
-        throw new UnsupportedOperationException("TODO"); //TODO
+        try {
+            //literal
+            if (tokens.peek("NIL") || tokens.peek("TRUE") || tokens.peek("FALSE")
+                    || tokens.peek(Token.Type.INTEGER) || tokens.peek(Token.Type.DECIMAL)
+                    || tokens.peek(Token.Type.CHARACTER) || tokens.peek(Token.Type.STRING)) {
+                return parseLiteralExpr();
+            }
+            //group
+            else if (tokens.peek("(")) {
+                return parseGroupExpr();
+            }
+            //object
+            else if (tokens.match("OBJECT")) {
+                return parseObjectExpr();
+            }
+            //var_or_fun
+            else if (tokens.peek(Token.Type.IDENTIFIER)) {
+                return parseVariableOrFunctionExpr();
+            }
+        }
+        catch (Exception exception ){
+            throw new ParseException("Invalid primary expression!");
+        }
+        return null;
     }
 
     private Ast.Expr.Literal parseLiteralExpr() throws ParseException {
-        throw new UnsupportedOperationException("TODO"); //TODO
+        return new Ast.Expr.Literal(tokens.get(0).literal());
     }
 
     private Ast.Expr.Group parseGroupExpr() throws ParseException {
-        throw new UnsupportedOperationException("TODO"); //TODO
+//        checkState(tokens.match("("));  //moves index
+//        var ret_store = parseExpr();
+//        if (tokens.match("(")) {
+//            checkState(tokens.match("("));
+//            return new Ast.Expr.Group(ret_store);
+//        }
+//        throw new ParseException("Missing closing parenthesis!");
+        checkState(tokens.match("("));  //moves index
+        var ret_store = parseExpr();
+        if (tokens.match(")")) {
+            return new Ast.Expr.Group(ret_store);
+        }
+        throw new ParseException("Missing closing parenthesis!");
     }
 
     private Ast.Expr.ObjectExpr parseObjectExpr() throws ParseException {
-        throw new UnsupportedOperationException("TODO"); //TODO
+        var name = "";
+        if (!tokens.match("DO")) {
+            name = tokens.get(0).literal();
+            tokens.match(name);  //moves index along...
+        }
+        return null;
     }
 
     private Ast.Expr parseVariableOrFunctionExpr() throws ParseException {
