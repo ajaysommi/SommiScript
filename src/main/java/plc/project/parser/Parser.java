@@ -276,7 +276,7 @@ public final class Parser {
                 return parseObjectExpr();
             }
             //var_or_fun
-            else if (tokens.peek(Token.Type.IDENTIFIER)) {
+            else if (tokens.match(Token.Type.IDENTIFIER)) {
                 return parseVariableOrFunctionExpr();
             }
         }
@@ -316,9 +316,27 @@ public final class Parser {
     }
 
     private Ast.Expr parseVariableOrFunctionExpr() throws ParseException {
-        checkState(tokens.match(Token.Type.IDENTIFIER));
         var name = tokens.get(-1).literal();
-        return new Ast.Expr.Variable(name); //todo functions
+        boolean multiple_expr = false;
+        if (!tokens.match("(")) {
+            return new Ast.Expr.Variable(name);
+        }
+        else {
+            var arguments = new ArrayList<Ast.Expr>();
+            while (!tokens.match(")")) {
+                if (!multiple_expr) {
+                    arguments.add(parseExpr());
+                }
+                else {
+                    if (!tokens.match(",")) {
+                        throw new ParseException("Syntax error: missing comma!");
+                    }
+                    arguments.add(parseExpr());
+                }
+                multiple_expr = true;
+            }
+            return new Ast.Expr.Function(name, arguments);
+        }
     }
 
     private static final class TokenStream {
