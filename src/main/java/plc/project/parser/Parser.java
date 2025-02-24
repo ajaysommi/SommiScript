@@ -307,12 +307,24 @@ public final class Parser {
     }
 
     private Ast.Expr.ObjectExpr parseObjectExpr() throws ParseException {
-        var name = "";
-        if (!tokens.match("DO")) {
-            name = tokens.get(0).literal();
-            tokens.match(name);  //moves index along...
+        String name = null;
+        var fields = new ArrayList<Ast.Stmt.Let>();
+        var methods = new ArrayList<Ast.Stmt.Def>();
+        if (tokens.match(Token.Type.IDENTIFIER, "DO")) {
+            name = tokens.get(-2).literal();
         }
-        return null;
+        else if (!tokens.match("DO")) {
+            throw new ParseException("Missing DO in statement!");
+        }
+        while (!tokens.match("END")) {
+            if (tokens.match("LET")) {
+                fields.add(parseLetStmt());
+            }
+            else if (tokens.match("DEF")) {
+                methods.add(parseDefStmt());
+            }
+        }
+        return new Ast.Expr.ObjectExpr(Optional.ofNullable(name), fields, methods);
     }
 
     private Ast.Expr parseVariableOrFunctionExpr() throws ParseException {
