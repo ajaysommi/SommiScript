@@ -3,8 +3,11 @@ package plc.project.parser;
 import org.checkerframework.checker.units.qual.A;
 import plc.project.lexer.Token;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -287,7 +290,33 @@ public final class Parser {
     }
 
     private Ast.Expr.Literal parseLiteralExpr() throws ParseException {
-        return new Ast.Expr.Literal(tokens.get(0).literal());
+        var ret_obj = tokens.get(0).literal();
+        var ret_type = tokens.get(0).type();
+        tokens.index++;
+        System.out.println(ret_obj);
+        if (Objects.equals(ret_obj, "NIL")) {
+            return new Ast.Expr.Literal(null);
+        }
+        else if (Objects.equals(ret_obj, "TRUE")) {
+            return new Ast.Expr.Literal(true);
+        }
+        else if (Objects.equals(ret_obj, "FALSE")) {
+            return new Ast.Expr.Literal(false);
+        }
+        else if (ret_type == Token.Type.INTEGER) {
+            return new Ast.Expr.Literal(new BigInteger(ret_obj));
+        }
+        else if (ret_type == Token.Type.DECIMAL) {
+            return new Ast.Expr.Literal(new BigDecimal(ret_obj));
+        }
+        else if (ret_type == Token.Type.CHARACTER) {
+            return new Ast.Expr.Literal(ret_obj.charAt(1));
+        }
+        else if (ret_obj.charAt(0) == '\"' || ret_obj.charAt(0) == '\'') {
+            String escape_escaper = ret_obj.substring(1, ret_obj.length() - 1).replace("\\n", "\n");
+            return new Ast.Expr.Literal(escape_escaper);
+        }
+        return new Ast.Expr.Literal(ret_obj);
     }
 
     private Ast.Expr.Group parseGroupExpr() throws ParseException {
