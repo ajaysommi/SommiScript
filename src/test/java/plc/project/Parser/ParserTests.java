@@ -59,6 +59,16 @@ final class ParserTests {
                     new Ast.Stmt.Expression(new Ast.Expr.Variable("second")),
                     new Ast.Stmt.Expression(new Ast.Expr.Variable("third"))
                 ))
+            ),
+            Arguments.of("Missing semicolon",
+                    new Input.Tokens(List.of(
+                            new Token(Token.Type.IDENTIFIER, "first"),
+                            new Token(Token.Type.OPERATOR, ";"),
+                            new Token(Token.Type.IDENTIFIER, "second"),
+                            new Token(Token.Type.OPERATOR, ";"),
+                            new Token(Token.Type.IDENTIFIER, "third")
+                    )),
+                    null
             )
         );
     }
@@ -97,6 +107,26 @@ final class ParserTests {
                     new Token(Token.Type.IDENTIFIER, "expr")
                 )),
                 null //ParseException
+            ),
+            Arguments.of("Wronly Spelled",
+                    new Input.Tokens(List.of(
+                            new Token(Token.Type.IDENTIFIER, "LEET"),
+                            new Token(Token.Type.IDENTIFIER, "name"),
+                            new Token(Token.Type.OPERATOR, "="),
+                            new Token(Token.Type.IDENTIFIER, "expr"),
+                            new Token(Token.Type.OPERATOR, ";")
+                    )),
+                    null //ParseException
+            ),
+            Arguments.of("Boolean Equal Sign",
+                    new Input.Tokens(List.of(
+                            new Token(Token.Type.IDENTIFIER, "LET"),
+                            new Token(Token.Type.IDENTIFIER, "name"),
+                            new Token(Token.Type.OPERATOR, "=="),
+                            new Token(Token.Type.IDENTIFIER, " expr"),
+                            new Token(Token.Type.OPERATOR, ";")
+                    )),
+                    null //ParseException
             )
         );
     }
@@ -630,6 +660,16 @@ final class ParserTests {
                         ))
                     ))
                 ))
+            ),
+            Arguments.of("Hello World No Semicolon",
+                //Input.Program makes this much easier, but relies on your Lexer
+                //being implemented correctly!
+                new Input.Program("""
+                    DEF main() DO
+                        print("Hello, World!")
+                    END
+                    """),
+                null  //throws exception and returns null
             )
         );
     }
