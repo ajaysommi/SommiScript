@@ -111,7 +111,7 @@ public final class Evaluator implements Ast.Visitor<RuntimeValue, EvaluateExcept
         } else {
             var primitive = requireType(value, RuntimeValue.Primitive.class);
             if (!type.isInstance(primitive.value())) {
-                var received = primitive.value() != null primitive.value().getClass() : null;
+                var received = primitive.value() != null ? primitive.value().getClass() : null;
                 throw new EvaluateException("Expected value to be of type " + type + ", received " + received + ".");
             }
             return (T) primitive.value();
