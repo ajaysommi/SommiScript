@@ -41,7 +41,8 @@ public final class Environment {
     }
 
     private static RuntimeValue range(List<RuntimeValue> arguments) {
-        throw new UnsupportedOperationException("TODO"); //TODO
+        return new RuntimeValue.Primitive((arguments.toArray().length));
+        //MAYBE
     }
 
     private static RuntimeValue function(List<RuntimeValue> arguments) {
