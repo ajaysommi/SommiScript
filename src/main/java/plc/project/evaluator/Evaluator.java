@@ -29,6 +29,9 @@ public final class Evaluator implements Ast.Visitor<RuntimeValue, EvaluateExcept
     @Override
     public RuntimeValue visit(Ast.Stmt.Let ast) throws EvaluateException {
         throw new UnsupportedOperationException("TODO"); //TODO
+        //for example, this returns a runtime value (or calls visit again)
+        //it also defines new scope variable.
+        //if new scope.... create new scope, set this as new scope and define everything, then switch back
     }
 
     @Override
@@ -240,6 +243,7 @@ public final class Evaluator implements Ast.Visitor<RuntimeValue, EvaluateExcept
         catch (Exception exception) {
             throw new EvaluateException("name not defined");
         }
+        //return scope.get("pi", false).get();
     }
 
     @Override
