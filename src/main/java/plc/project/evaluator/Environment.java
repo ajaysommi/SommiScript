@@ -7,6 +7,7 @@ public final class Environment {
 
     public static Scope scope() {
         var scope = new Scope(null);
+        scope.define("debug", new RuntimeValue.Function("debug", Environment::debug));
         scope.define("print", new RuntimeValue.Function("print", Environment::print));
         scope.define("log", new RuntimeValue.Function("log", Environment::log));
         scope.define("list", new RuntimeValue.Function("list", Environment::list));
@@ -18,6 +19,18 @@ public final class Environment {
         object.scope().define("property", new RuntimeValue.Primitive("property"));
         object.scope().define("method", new RuntimeValue.Function("method", Environment::method));
         return scope;
+    }
+
+
+    /**
+     * Prints the raw RuntimeValue.toString() result.
+     */
+    private static RuntimeValue debug(List<RuntimeValue> arguments) throws EvaluateException {
+        if (arguments.size() != 1) {
+            throw new EvaluateException("Expected debug to be called with 1 argument.");
+        }
+        System.out.println(arguments.getFirst());
+        return new RuntimeValue.Primitive(null);
     }
 
     private static RuntimeValue print(List<RuntimeValue> arguments) throws EvaluateException {
