@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Optional;
 
 public final class Evaluator implements Ast.Visitor<RuntimeValue, EvaluateException> {
 
@@ -22,16 +23,27 @@ public final class Evaluator implements Ast.Visitor<RuntimeValue, EvaluateExcept
         for (var stmt : ast.statements()) {
             value = visit(stmt);
         }
+        scope.get("RETURN", false);
         //TODO: Handle the possibility of RETURN being called outside of a function.
         return value;
     }
 
     @Override
     public RuntimeValue visit(Ast.Stmt.Let ast) throws EvaluateException {
-        throw new UnsupportedOperationException("TODO"); //TODO
+        if (scope.get(ast.name(), true).isPresent()) {
+            throw new EvaluateException("Already present");
+        }
+        else if (ast.value().isPresent()) {
+            scope.define(ast.name(), new RuntimeValue.Primitive(ast.value()));
+        }
+        else {
+            scope.define(ast.name(), new RuntimeValue.Primitive(null));
+            return new RuntimeValue.Primitive(null);
+        }
         //for example, this returns a runtime value (or calls visit again)
         //it also defines new scope variable.
         //if new scope.... create new scope, set this as new scope and define everything, then switch back
+        return new RuntimeValue.Primitive(ast.value());
     }
 
     @Override
@@ -253,14 +265,16 @@ public final class Evaluator implements Ast.Visitor<RuntimeValue, EvaluateExcept
 
     @Override
     public RuntimeValue visit(Ast.Expr.Function ast) throws EvaluateException {
-        var list_of_args = new ArrayList<RuntimeValue>();
-        if (!ast.name().isEmpty() && ast == RuntimeValue.Function) {
-            for (var argument : ast.arguments()) {
-                list_of_args.add(visit(argument));
-            }
-            return new RuntimeValue.Function(ast.name(), list_of_args);
+        if (scope.get(ast.name(), false).isEmpty()
+                || !(scope.get(ast.name(), false).get() instanceof RuntimeValue.Function)) {
+            throw new EvaluateException("Nothing defined or not instance of function!");
         }
-        throw new UnsupportedOperationException("TODO"); //TODO
+        var list_of_args = new ArrayList<RuntimeValue>();
+        for (var argument : ast.arguments()) {
+            list_of_args.add(visit(argument));  //iterate through arguments and add to list_of_args array
+        }
+        return ((RuntimeValue.Function)(scope.get(ast.name(),
+                false)).get()).definition().invoke(list_of_args);
     }
 
     @Override
