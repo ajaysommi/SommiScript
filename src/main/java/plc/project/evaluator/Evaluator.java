@@ -7,6 +7,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public final class Evaluator implements Ast.Visitor<RuntimeValue, EvaluateException> {
@@ -53,7 +55,35 @@ public final class Evaluator implements Ast.Visitor<RuntimeValue, EvaluateExcept
 
     @Override
     public RuntimeValue visit(Ast.Stmt.If ast) throws EvaluateException {
-        throw new UnsupportedOperationException("TODO"); //TODO
+        var condition = visit(ast.condition());
+        RuntimeValue ret_val = null;
+        Scope parent_restore = scope;  //restoration variable to revert back to at end of call
+        Scope new_scope = new Scope(scope);  //new child scope to be used
+        if (condition instanceof RuntimeValue.Primitive cond) {
+            //checks if condition is a boolean
+            if (!(cond.value() instanceof Boolean)) {
+                throw new EvaluateException("Condition not boolean!");
+            }
+            scope = new_scope;  //"entering" new scope by setting it as current scope
+            if (Objects.equals(ast.condition(), new Ast.Expr.Literal(true))) {
+                System.out.println("true");
+                for (var each_stmt : ast.thenBody()) {
+                    ret_val = visit(each_stmt);
+                }
+            }
+            else if (Objects.equals(ast.condition(), new Ast.Expr.Literal(false))) {
+                System.out.println("false");
+                for (var each_stmt : ast.elseBody()) {
+                    ret_val = visit(each_stmt);
+                }
+            }
+            scope = parent_restore;
+        }
+        else {
+            throw new EvaluateException("Ast condition not of primitive type!");
+        }
+        System.out.println(ret_val);
+        return ret_val;
     }
 
     @Override
@@ -73,7 +103,21 @@ public final class Evaluator implements Ast.Visitor<RuntimeValue, EvaluateExcept
 
     @Override
     public RuntimeValue visit(Ast.Stmt.Assignment ast) throws EvaluateException {
-        throw new UnsupportedOperationException("TODO"); //TODO
+        RuntimeValue ret_val = null;
+        if (!(ast.expression() instanceof Ast.Expr.Variable || ast.expression() instanceof Ast.Expr.Property)) {
+            throw new EvaluateException("Expression not variable or property!");
+        } else if (ast.expression() instanceof Ast.Expr.Variable var) {
+            if (scope.get(ast.expression().toString(), false).isPresent()) {
+                ret_val = visit(ast.value());
+                scope.set(ast.expression().toString(), ret_val);
+            }
+        } else if (ast.expression() instanceof Ast.Expr.Property prop) {  //if expression is Property
+            if (scope.get(ast.expression().toString(), false).isPresent()) {
+                ret_val = visit(ast.value());
+                scope.set(ast.expression().toString(), ret_val);
+            }
+        }
+        return ret_val;
     }
 
     @Override
@@ -249,18 +293,22 @@ public final class Evaluator implements Ast.Visitor<RuntimeValue, EvaluateExcept
 
     @Override
     public RuntimeValue visit(Ast.Expr.Variable ast) throws EvaluateException {
-        try {
-            return new RuntimeValue.Primitive(ast.name());
+        if (scope.get(ast.name(), false).equals(Optional.empty())) {
+            throw new EvaluateException("Value not present!");
         }
-        catch (Exception exception) {
-            throw new EvaluateException("name not defined");
-        }
-        //return scope.get("pi", false).get();
+        return scope.get(ast.name(), false).get();
     }
 
     @Override
     public RuntimeValue visit(Ast.Expr.Property ast) throws EvaluateException {
-        throw new UnsupportedOperationException("TODO"); //TODO
+        var receiver = visit(ast.receiver());
+        if (!(receiver instanceof RuntimeValue.ObjectValue)) {
+            throw new EvaluateException("Receiver not instance of Object!");
+        }
+        if (scope.get(ast.name(), false).equals(Optional.empty())) {
+            throw new EvaluateException("Value not present!");
+        }
+        return scope.get(ast.name(), false).get();
     }
 
     @Override
@@ -273,6 +321,8 @@ public final class Evaluator implements Ast.Visitor<RuntimeValue, EvaluateExcept
         for (var argument : ast.arguments()) {
             list_of_args.add(visit(argument));  //iterate through arguments and add to list_of_args array
         }
+        //gets value of scope (Optional<RunTimeValue>), then casts as a function to get definition
+        //within definition can use the invoke function.
         return ((RuntimeValue.Function)(scope.get(ast.name(),
                 false)).get()).definition().invoke(list_of_args);
     }
