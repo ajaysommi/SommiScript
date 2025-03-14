@@ -213,7 +213,7 @@ public final class Evaluator implements Ast.Visitor<RuntimeValue, EvaluateExcept
                 }
             }
             //if left is string
-            else if (pLeft.value() instanceof String) {
+            else if (pLeft.value() instanceof String && joinOperation == "add") {
                 if (right instanceof RuntimeValue.Primitive pRight) {
                     var retVal = (pLeft.value().toString() + pRight.value().toString());
                     return new RuntimeValue.Primitive(retVal);
@@ -245,17 +245,38 @@ public final class Evaluator implements Ast.Visitor<RuntimeValue, EvaluateExcept
                 }
             }
             //if left is comparable (greater than, less than, etc.)
-            else if (pLeft.value() instanceof Comparable<?>) {
+            else if (pLeft.value() instanceof Comparable<?> || joinOperation == "less_than") {
                 if (right instanceof RuntimeValue.Primitive pRight) {
+                    int comp_val = 0;
                     if (pRight.value() instanceof Comparable<?>) {
                         if (joinOperation == "less_than") {
-                            return new RuntimeValue.Primitive(((BigDecimal) pLeft.value()).add((BigDecimal) pRight.value()));
+                            comp_val = (((Comparable<Object>) pLeft.value()).compareTo((Object)pRight.value()));
+                            if (comp_val < 0) {
+                                return new RuntimeValue.Primitive(true);
+                            } else if (comp_val > 0) {
+                                return new RuntimeValue.Primitive(false);
+                            }
                         } else if (joinOperation.equals("less_than_eq")) {
-                            return new RuntimeValue.Primitive(((BigDecimal) pLeft.value()).subtract((BigDecimal) pRight.value()));
+                            comp_val = (((Comparable<Object>) pLeft.value()).compareTo((Object)pRight.value()));
+                            if (comp_val <= 0) {
+                                return new RuntimeValue.Primitive(true);
+                            } else {
+                                return new RuntimeValue.Primitive(false);
+                            }
                         } else if (joinOperation.equals("greater_than")) {
-                            return new RuntimeValue.Primitive(((BigDecimal) pLeft.value()).multiply((BigDecimal) pRight.value()));
+                            comp_val = (((Comparable<Object>) pLeft.value()).compareTo((Object)pRight.value()));
+                            if (comp_val > 0) {
+                                return new RuntimeValue.Primitive(true);
+                            } else if (comp_val < 0) {
+                                return new RuntimeValue.Primitive(false);
+                            }
                         } else if (joinOperation.equals("greater_than_eq")) {
-                            return new RuntimeValue.Primitive(((BigDecimal) pLeft.value()).divide((BigDecimal) pRight.value()));
+                            comp_val = (((Comparable<Object>) pLeft.value()).compareTo((Object)pRight.value()));
+                            if (comp_val >= 0) {
+                                return new RuntimeValue.Primitive(true);
+                            } else {
+                                return new RuntimeValue.Primitive(false);
+                            }
                         }
                     } else if (pRight.value() instanceof String) {
                         return new RuntimeValue.Primitive(pLeft.value().toString() + pRight.value().toString());
