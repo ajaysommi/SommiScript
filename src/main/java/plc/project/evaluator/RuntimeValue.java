@@ -10,7 +10,15 @@ public sealed interface RuntimeValue {
 
     record Primitive(
         @Nullable Object value
-    ) implements RuntimeValue {}
+    ) implements RuntimeValue {
+
+        @Override
+        public String toString() {
+            var clazz = value != null ? value.getClass().getSimpleName() : "N/A";
+            return "Primitive[value=" + value + ", class=" + clazz + "]";
+        }
+
+    }
 
     record Function(
         String name,
